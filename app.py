@@ -26,8 +26,13 @@ def fetch_series(series_id):
         "&sort_order=asc"
         "&file_type=json"
     )
-    with urllib.request.urlopen(url, timeout=15) as r:
-        data = json.loads(r.read())
+    req = urllib.request.Request(url, headers={"User-Agent": "macro-regime-dashboard/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="ignore")
+        raise RuntimeError(f"FRED HTTP {e.code} for {series_id}: {body[:300]}")
     if "error_message" in data:
         raise ValueError(f"FRED error: {data['error_message']}")
     return [
